@@ -7,22 +7,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.ToolTip;
 
 namespace WindowsFormsApp24
 {
-    public class cActor
-    {
-        public int x, y, w, h, Life, dir;
-    }
-    public class CMultiImageActor
-    {
-        public int X, Y;
-        public List<List<Bitmap>> animations = new List<List<Bitmap>>();
-        public List<Bitmap> imgs;
-        public int iFrame;
-        public int xDir = 0; public int currentAnimation = 0;
-
-    }
     public partial class Form1 : Form
     {
         Bitmap off;
@@ -34,6 +22,7 @@ namespace WindowsFormsApp24
         int jumptype;
         bool flying = false;
 
+        bool isUpPressed = false;
         bool isLeftPressed = false;
         bool isRightPressed = false;
         bool isDownPressed = false;
@@ -46,10 +35,10 @@ namespace WindowsFormsApp24
             this.WindowState = FormWindowState.Maximized;
             Load += Form1_Load;
             Paint += Form1_Paint;
-            KeyDown += Form1_KeyDown;
+            KeyDown += move_keydown;
             KeyUp += Form1_KeyUp;
-
-            tt.Interval = 100;
+            KeyDown += Form1_KeyDown1;
+            tt.Interval = 85;
             tt.Start();
             tt.Tick += Tt_Tick;
         }
@@ -72,7 +61,7 @@ namespace WindowsFormsApp24
             DrawDubb(this.CreateGraphics());
         }
 
-        private void Form1_KeyDown(object sender, KeyEventArgs e)
+        private void move_keydown(object sender, KeyEventArgs e)
         {
             switch (e.KeyCode)
             {
@@ -85,20 +74,28 @@ namespace WindowsFormsApp24
                 case Keys.Down:
                     isDownPressed = true;
                     break;
-                case Keys.ShiftKey:
-                    isShiftPressed = true;
+                case Keys.Up:
+                    isUpPressed = true;
                     break;
+            }
+        }
+        private void Form1_KeyDown1(object sender, KeyEventArgs e)
+        {
+            switch (e.KeyCode)
+            {
                 case Keys.F:
                     createbullets();
                     break;
                 case Keys.G:
                     createlazer();
                     break;
+                case Keys.ShiftKey:
+                    isShiftPressed = true;
+                    break;
                 case Keys.Space:
                     if (!flying)
                         isSpacePressed = true;
                     break;
-
             }
         }
         private void Form1_KeyUp(object sender, KeyEventArgs e)
@@ -118,34 +115,47 @@ namespace WindowsFormsApp24
             pnn.imgs = new List<Bitmap>();
             List<Bitmap> walkLeft = new List<Bitmap>();
             List<Bitmap> walkRight = new List<Bitmap>();
-            for (int i = 1; i < 5; i++)
+            List<Bitmap> standLeft = new List<Bitmap>();
+            List<Bitmap> standRight = new List<Bitmap>();
+            Bitmap img = new Bitmap("jazz/Rstand.png");
+            img.MakeTransparent(img.GetPixel(0, 0));
+            pnn.standR.Add(img);
+            img = new Bitmap("jazz/Lstand.png");
+            img.MakeTransparent(img.GetPixel(0, 0));
+            pnn.standL.Add(img);
+            for (int i = 0; i < 8; i++)
             {
-                Bitmap img = new Bitmap("Lwalk" + i + ".png");// 3shan a5od dimensions el pic
+                /*img = new Bitmap("Lwalk" + i + ".png");// 3shan a5od dimensions el pic
                 img.MakeTransparent(img.GetPixel(0, 0));
-                pnn.imgs.Add(img);
+                pnn.imgs.Add(img);*/
 
-                Bitmap imgL = new Bitmap("Lwalk" + i + ".png");
-                imgL.MakeTransparent(imgL.GetPixel(0, 0));
-                walkLeft.Add(imgL);
+                img = new Bitmap("jazz/Lwalk_" + i + ".png");
+                img.MakeTransparent(img.GetPixel(0, 0));
+                pnn.walkL.Add(img);
 
-                Bitmap imgR = new Bitmap("Rwalk" + i + ".png");
-                imgR.MakeTransparent(imgR.GetPixel(0, 0));
-                walkRight.Add(imgR);
+                img = new Bitmap("jazz/Rwalk_" + i + ".png");
+                img.MakeTransparent(img.GetPixel(0, 0));
+                pnn.walkR.Add(img);
             }
+            /*pnn.animations.Add(standRight);
+            pnn.animations.Add(standLeft);
             pnn.animations.Add(walkLeft);
             pnn.animations.Add(walkRight);
-
+*/
             pnn.X = ClientSize.Width / 2;
-            pnn.Y = ClientSize.Height / 2 - pnn.imgs[0].Height;
-
+            pnn.Y = ClientSize.Height / 2 - (pnn.standR[0].Height / 2);
+            pnn.xDir = 1;
+            pnn.currentAnimation = 0;
             LHero.Add(pnn);
         }
 
         void createbullets()
         {//mfrod nzbot el x,y el bttl3 mnha el bullet 3la 7sb bases fen
             cActor pnn = new cActor();
-            pnn.x = LHero[0].X + LHero[0].imgs[LHero[0].iFrame].Width;
-            pnn.y = LHero[0].Y + LHero[0].imgs[LHero[0].iFrame].Height / 2 + 8;
+            //pnn.x = LHero[0].X + LHero[0].imgs[LHero[0].iFrame].Width;
+            //pnn.y = LHero[0].Y + LHero[0].imgs[LHero[0].iFrame].Height / 2 + 8;
+            pnn.x = LHero[0].X;
+            pnn.y = LHero[0].Y;
             pnn.w = 5;
             pnn.h = 0;
             pnn.Life = 1;
@@ -216,6 +226,8 @@ namespace WindowsFormsApp24
         {
             //mmkn n5lyh fluid aktr lw el jump 3la 7sb days ymen wla shmal
             //bas fyh degree of difficulty fa dk b2a (if want change ask me)
+
+            //re: azdk el howa yro7 b angle ymen aw shmal?
             flying = true;
             if (isSpacePressed == true)
             {
@@ -243,16 +255,18 @@ namespace WindowsFormsApp24
         void Gravity()
         {
             //clientsize.height/2 for testing (htt8yr)
-            if (LHero[0].Y <= ClientSize.Height / 2 - LHero[0].imgs[0].Height && jumptype == 0)//jump type:anwa3 falling
+            //rename ntmp
+            int ntmp = ClientSize.Height / 2 - LHero[0].standL[0].Height;
+            if (LHero[0].Y <= ntmp && jumptype == 0)//jump type:anwa3 falling
             {
                 LHero[0].Y += 3;
             }
-            else if (LHero[0].Y <= ClientSize.Height / 2 - LHero[0].imgs[0].Height && jumptype == 1)
+            else if (LHero[0].Y <= ntmp && jumptype == 1)
             {
                 LHero[0].Y += 3;
                 LHero[0].X++;
             }
-            else if (LHero[0].Y <= ClientSize.Height / 2 - LHero[0].imgs[0].Height && jumptype == -1)
+            else if (LHero[0].Y <= ntmp && jumptype == -1)
             {
                 LHero[0].Y += 3;
                 LHero[0].X--;
@@ -264,34 +278,47 @@ namespace WindowsFormsApp24
         }
         void Move()
         {
+            CMultiImageActor hero = LHero[0];
+            double run = 1;
+            if(isShiftPressed == true)
+            {
+                run = 1.5;
+            }
             if (isRightPressed == true)
             {
-                LHero[0].X += 5;
-                LHero[0].iFrame = (LHero[0].iFrame + 1) % 4;
+                LHero[0].X += (int)(hero.speed * run);
+                if(hero.xDir == -1)
+                {
+                    hero.iFrame = -1;
+                }
                 LHero[0].xDir = 1;
-                LHero[0].currentAnimation = 1;
+                //LHero[0].iFrame = (LHero[0].iFrame + 1) % 4;
+                hero.iFrame++;
+                LHero[0].currentAnimation = 2;
             }
-            if (isShiftPressed == true && isRightPressed == true)
+            else if (isLeftPressed == true)
             {
-                LHero[0].X += 20;
-                LHero[0].iFrame = (LHero[0].iFrame + 1) % 4;
-                LHero[0].xDir = 1;
-                LHero[0].currentAnimation = 1;
-            }
-
-            if (isLeftPressed == true)
-            {
-                LHero[0].X -= 5;
-                LHero[0].iFrame = (LHero[0].iFrame + 1) % 4;
+                LHero[0].X -= (int)(hero.speed * run);
+                if (hero.xDir == 1)
+                {
+                    hero.iFrame = -1;
+                }
                 LHero[0].xDir = -1;
-                LHero[0].currentAnimation = 0;
+                //LHero[0].iFrame = (LHero[0].iFrame + 1) % 4;
+                hero.iFrame++;
+                LHero[0].currentAnimation = 3;
             }
-            if (isShiftPressed == true && isLeftPressed == true)
+            else
             {
-                LHero[0].X -= 20;
-                LHero[0].iFrame = (LHero[0].iFrame + 1) % 4;
-                LHero[0].xDir = -1;
-                LHero[0].currentAnimation = 0;
+                hero.iFrame = 0;
+                if(hero.xDir == 1)
+                {
+                    LHero[0].currentAnimation = 0;
+                }
+                else
+                {
+                    hero.currentAnimation = 1;
+                }
             }
         }
         void DrawScene(Graphics g2)
@@ -313,10 +340,13 @@ namespace WindowsFormsApp24
 
             for (int i = 0; i < LHero.Count; i++)
             {
-                int k = LHero[i].iFrame;
-                List<Bitmap> currentFrames = LHero[i].animations[LHero[i].currentAnimation];
-                Bitmap frame = currentFrames[k];
-                g2.DrawImage(frame, LHero[i].X, LHero[i].Y, frame.Width + 10, frame.Height + 10);
+                CMultiImageActor hero = LHero[i];
+                //List<Bitmap> currentFrames = hero.animations[LHero[i].currentAnimation];
+                //Bitmap frame = currentFrames[k];
+                
+                Bitmap frame = hero.curr_F();
+                //g2.DrawImage(frame, LHero[i].X, LHero[i].Y, frame.Width + 10, frame.Height + 10);
+                g2.DrawImage(frame, hero.X - (frame.Width / 2), hero.Y - (frame.Height / 2));
             }
 
             
@@ -336,5 +366,58 @@ namespace WindowsFormsApp24
             DrawDubb(e.Graphics);
         }
 
+    }
+    public class cActor
+    {
+        public int x, y, w, h, Life, dir;
+    }
+    public class CMultiImageActor
+    {
+        public int X, Y;
+        public List<List<Bitmap>> animations = new List<List<Bitmap>>();
+        public List<Bitmap> standR = new List<Bitmap>();
+        public List<Bitmap> standL = new List<Bitmap>();
+        public List<Bitmap> walkR = new List<Bitmap>();
+        public List<Bitmap> walkL = new List<Bitmap>();
+        public List<Bitmap> imgs;
+        public int iFrame;
+        public int xDir = 0; 
+        public int currentAnimation = 0;
+        public int speed = 20;
+        public List<Bitmap> curr_L()
+        {
+            List<Bitmap> ltmp = new List<Bitmap>();
+            switch (currentAnimation)
+            {
+                case 0:
+                    ltmp = standR;
+                    break;
+                case 1:
+                    ltmp = standL;
+                    break;
+                case 2:
+                    ltmp = walkR;
+                    break;
+                case 3:
+                    ltmp = walkL;
+                    break;
+            }
+            return ltmp;
+        }
+        public Bitmap curr_F()
+        {
+            List<Bitmap> Ltmp = curr_L();
+            return Ltmp[iFrame % (Ltmp.Count)];
+        }
+        public int curr_H()
+        {
+            Bitmap btmp = curr_F();
+            return btmp.Height;
+        }
+        public int hitbox_up()
+        {
+            Bitmap btmp = curr_F();
+            return X - (btmp.Height/2);
+        }
     }
 }
