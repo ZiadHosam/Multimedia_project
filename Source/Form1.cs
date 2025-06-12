@@ -16,11 +16,14 @@ namespace WindowsFormsApp24
         Bitmap off;
         Timer tt = new Timer();
         List<CMultiImageActor> LHero = new List<CMultiImageActor>();
+        List<CMultiImageActor> plats = new List<CMultiImageActor>();
+        List<CMultiImageActor> ladder = new List<CMultiImageActor>();
         List<cActor> bullet = new List<cActor>();
         List<cActor> lazer = new List<cActor>();
 
         int jumptype;
         bool flying = false;
+        bool gravity=true;
 
         bool isUpPressed = false;
         bool isLeftPressed = false;
@@ -48,6 +51,9 @@ namespace WindowsFormsApp24
         private void Form1_Load(object sender, EventArgs e)
         {
             CreateHero();
+            platforms();
+            ladders();
+
             off = new Bitmap(ClientSize.Width, ClientSize.Height);
         }
 
@@ -60,7 +66,9 @@ namespace WindowsFormsApp24
             Lazer();
             AnimateHero();
             CoolDowns();
-            
+            platmove();
+            platchecker();
+            ladderschecker();
             ctTick++;
 
             DrawDubb(this.CreateGraphics());
@@ -108,6 +116,7 @@ namespace WindowsFormsApp24
             if (e.KeyCode == Keys.Right) isRightPressed = false;
             if (e.KeyCode == Keys.Space) isSpacePressed = false;
             if (e.KeyCode == Keys.Down) isDownPressed = false;
+            if (e.KeyCode == Keys.Up) isUpPressed = false;
             if (e.KeyCode == Keys.ShiftKey) isShiftPressed = false;
         }
 
@@ -203,6 +212,15 @@ namespace WindowsFormsApp24
                 hero.X += (int)(hero.speed * run) * hero.xDir;
                 //LHero[0].iFrame = (LHero[0].iFrame + 1) % 4;
                 //LHero[0].currentAnimation = 3;
+            }
+
+            if (LHero[0].yDir == -1)//elevator related
+            {
+                LHero[0].Y--;
+            }
+            if (LHero[0].yDir == 1)
+            {
+                LHero[0].Y++;
             }
             
         }
@@ -368,9 +386,13 @@ namespace WindowsFormsApp24
 
         void Gravity()
         {
+            if (gravity == true)
+            {
+
+            
             //clientsize.height/2 for testing (htt8yr)
             //rename ntmp
-            int ntmp = ClientSize.Height / 2 - LHero[0].standL[0].Height;
+            int ntmp = ClientSize.Height / 2 - LHero[0].standL[0].Height+16;
             if (LHero[0].Y <= ntmp && jumptype == 0)//jump type:anwa3 falling
             {
                 LHero[0].Y += 3;
@@ -389,8 +411,109 @@ namespace WindowsFormsApp24
             {
                 flying = false;
             }
+
+            }
         }
 
+        void platforms()
+        {
+            int x=850,y=350;
+            for(int i = 0; i < 2; i++)
+            {   
+            CMultiImageActor pnn = new CMultiImageActor();
+            pnn.img = new Bitmap("jazz/platf.png");
+            pnn.img.MakeTransparent(pnn.img.GetPixel(0, 0));
+            pnn.X=x;
+            pnn.Y=y;
+            pnn.yDir=1;
+            plats.Add(pnn);
+                x+=100;
+                y-=50;
+            }
+        }
+        void platmove()
+        {
+            //elevator
+            for(int i = 0; i < plats.Count; i++)
+            {
+                if (plats[i].yDir == -1)
+                {
+                plats[i].Y--;
+                }
+                if (plats[i].yDir == 1)
+                {
+                plats[i].Y++;
+                }
+
+                if (plats[i].Y <=320 )
+                {
+                plats[i].yDir=1;
+                }
+                if (plats[i].Y >=360 )
+                {
+                plats[i].yDir=-1;
+                }
+            }
+        }
+        void platchecker()
+        {
+            int heroBottom = LHero[0].Y + LHero[0].standL[0].Height/2;
+            for(int i = 0; i < plats.Count; i++)
+            {
+                if ((heroBottom <= plats[i].Y+5 && heroBottom>=plats[i].Y)&&(LHero[0].X>=plats[i].X
+                    &&LHero[0].X<=plats[i].X+plats[i].img.Width))
+                {
+                    flying=false;
+                    gravity=false;
+                    LHero[0].yDir=plats[i].yDir;
+                    break;
+                }
+                else
+                {
+                    gravity=true;
+                    LHero[0].yDir=0;
+                }
+            }
+        }
+
+        void ladders()
+        {
+            int x=550,y=250;
+              
+            CMultiImageActor pnn = new CMultiImageActor();
+            pnn.img = new Bitmap("jazz/ladder.png");
+            pnn.img.MakeTransparent(pnn.img.GetPixel(0, 0));
+            pnn.X=x;
+            pnn.Y=y;
+            pnn.yDir=1;
+            ladder.Add(pnn);
+                
+            
+        }
+
+        void ladderschecker()
+        {
+            int heroBottom = LHero[0].Y + LHero[0].standL[0].Height/2;
+            for(int i = 0; i < ladder.Count; i++)
+            {
+                if ((heroBottom <= ladder[i].Y+ladder[i].img.Height && heroBottom>=ladder[i].Y)&&(LHero[0].X>=ladder[i].X
+                    &&LHero[0].X<=ladder[i].X+ladder[i].img.Width))
+                {
+                    flying=false;
+                    gravity=false;
+                    if (isUpPressed == true)
+                    {
+                        LHero[0].Y-=5;
+                    }
+                    if (isDownPressed == true)
+                    {
+                        LHero[0].Y+=5;
+                    }
+                    break;
+                }
+
+            }
+        }
         private void CoolDowns()
         {
             if (FireRate > 0)
@@ -434,6 +557,16 @@ namespace WindowsFormsApp24
                 g2.FillRectangle(Brushes.Red, lazer[i].x, lazer[i].y, lazer[i].w, lazer[i].h);
             }
 
+            for (int i = 0; i < plats.Count; i++)
+            {
+                g2.DrawImage(plats[i].img,plats[i].X,plats[i].Y);
+            }
+
+            for (int i = 0; i < ladder.Count; i++)
+            {
+                g2.DrawImage(ladder[i].img,ladder[i].X,ladder[i].Y);
+            }
+
             for (int i = 0; i < LHero.Count; i++)
             {
                 CMultiImageActor hero = LHero[i];
@@ -473,9 +606,11 @@ namespace WindowsFormsApp24
         public List<Bitmap> stopshootR = new List<Bitmap>();
         //7
         public List<Bitmap> stopshootL = new List<Bitmap>();
+        public Bitmap img;
         public List<Bitmap> imgs;
         public int iFrame;
         public int xDir = 0; 
+        public int yDir = 0; 
         public int currentAnimation = 0;
         public int speed = 20;
         public List<Bitmap> curr_L()
@@ -497,6 +632,7 @@ namespace WindowsFormsApp24
                     break;
                 case 4:
                     ltmp = shootR;
+                    break;
             }
             return ltmp;
         }
