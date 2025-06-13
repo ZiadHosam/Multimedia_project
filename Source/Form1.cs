@@ -497,6 +497,7 @@ namespace WindowsFormsApp24
                     break;
                 case 4:
                     ltmp = shootR;
+                    break;
             }
             return ltmp;
         }
