@@ -1,7 +1,6 @@
 C:\Users\Ziad\Documents\GitHub\Multimedia_project\Source\bin\Debug\WindowsFormsApp24.exe.config
 C:\Users\Ziad\Documents\GitHub\Multimedia_project\Source\bin\Debug\WindowsFormsApp24.exe
 C:\Users\Ziad\Documents\GitHub\Multimedia_project\Source\bin\Debug\WindowsFormsApp24.pdb
-C:\Users\Ziad\Documents\GitHub\Multimedia_project\Source\obj\Debug\WindowsFormsApp24.csproj.AssemblyReference.cache
 C:\Users\Ziad\Documents\GitHub\Multimedia_project\Source\obj\Debug\WindowsFormsApp24.Properties.Resources.resources
 C:\Users\Ziad\Documents\GitHub\Multimedia_project\Source\obj\Debug\WindowsFormsApp24.csproj.GenerateResource.cache
 C:\Users\Ziad\Documents\GitHub\Multimedia_project\Source\obj\Debug\WindowsFormsApp24.csproj.CoreCompileInputs.cache
@@ -16,3 +15,4 @@ C:\Users\moaster\source\repos\Multimedia_project\Source\obj\Debug\WindowsFormsAp
 C:\Users\moaster\source\repos\Multimedia_project\Source\obj\Debug\WindowsFormsApp24.csproj.CoreCompileInputs.cache
 C:\Users\moaster\source\repos\Multimedia_project\Source\obj\Debug\WindowsFormsApp24.exe
 C:\Users\moaster\source\repos\Multimedia_project\Source\obj\Debug\WindowsFormsApp24.pdb
+C:\Users\Ziad\Documents\GitHub\Multimedia_project\Source\obj\Debug\WindowsFormsApp24.csproj.AssemblyReference.cache
