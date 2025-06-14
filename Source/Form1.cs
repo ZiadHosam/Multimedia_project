@@ -23,7 +23,7 @@ namespace WindowsFormsApp24
 
         int jumptype;
         bool flying = false;
-        bool gravity=true;
+        bool gravity = false;
 
         bool isUpPressed = false;
         bool isLeftPressed = false;
@@ -32,10 +32,24 @@ namespace WindowsFormsApp24
         bool isShiftPressed = false;
         bool isSpacePressed = false;
         bool isFPressed = false;
+        bool isOnPlatform = false;
+        bool isOnLadder = false;
+
         int ctTick = 0;
         int FireRate = 0;
         int BulletSpeed = 50;
         int MoveLock = 0;
+        int stopFire = 0;
+        int stopCrouch = 0;
+        int runordash = 0;
+        int jump_ct = 0;
+        int jump_ct_max = 0;
+        int max_jump = 2 * 2;
+        int min_jump = 3;
+        int jump_pow = 20;
+        int jump_cd = 0;
+        int jump_cd_reset = 20;
+        int gravity_speed = 10;
         public Form1()
         {
             this.WindowState = FormWindowState.Maximized;
@@ -65,24 +79,25 @@ namespace WindowsFormsApp24
             Gravity();
             Lazer();
             AnimateHero();
-            CoolDowns();
             platmove();
             platchecker();
             ladderschecker();
-            ctTick++;
+            CoolDowns();
 
+            ctTick++;
             DrawDubb(this.CreateGraphics());
         }
 
         private void Form1_KeyDown(object sender, KeyEventArgs e)
         {
+            CMultiImageActor hero = LHero[0];
             switch (e.KeyCode)
             {
-                case Keys.Left:
-                    isLeftPressed = true;
-                    break;
                 case Keys.Right:
                     isRightPressed = true;
+                    break;
+                case Keys.Left:
+                    isLeftPressed = true;
                     break;
                 case Keys.Down:
                     isDownPressed = true;
@@ -104,20 +119,69 @@ namespace WindowsFormsApp24
                     isShiftPressed = true;
                     break;
                 case Keys.Space:
-                    if (!flying)
-                        isSpacePressed = true;
+                    isSpacePressed = true;
+                    if (jump_cd == 0)
+                    {
+                        if (gravity == false)
+                        {
+                            flying = true;
+                            if (jump_ct_max < max_jump)
+                            {
+                                jump_ct_max++;
+                            }
+                            else
+                            {
+                                jump_ct_max /= 2;
+                                jump_cd = jump_cd_reset;
+                            }
+                        }
+                    }
                     break;
             }
         }
-        
+
         private void Form1_KeyUp(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Left) isLeftPressed = false;
-            if (e.KeyCode == Keys.Right) isRightPressed = false;
-            if (e.KeyCode == Keys.Space) isSpacePressed = false;
-            if (e.KeyCode == Keys.Down) isDownPressed = false;
-            if (e.KeyCode == Keys.Up) isUpPressed = false;
-            if (e.KeyCode == Keys.ShiftKey) isShiftPressed = false;
+            CMultiImageActor hero = LHero[0];
+            switch (e.KeyCode)
+            {
+                case Keys.Right:
+                    isRightPressed = false;
+                    break;
+                case Keys.Left:
+                    isLeftPressed = false;
+                    break;
+                case Keys.Down:
+                    isDownPressed = false;
+                    if (hero.currentAnimation == 14 || hero.currentAnimation == 15)
+                    {
+                        stopFire = hero.s_stopcrouchL.Count;
+                    }
+                    break;
+                case Keys.Up:
+                    isUpPressed = false;
+                    break;
+                case Keys.F:
+                    isFPressed = false;
+                    if (hero.currentAnimation == 4 || hero.currentAnimation == 5)
+                    {
+                        stopFire = hero.s_stopshootL.Count;
+                    }
+                    break;
+                case Keys.Space:
+                    isSpacePressed = false;
+                    if(jump_ct_max > 0)
+                    {
+                        jump_ct_max /= 2;
+                        jump_cd = jump_cd_reset;
+                    }
+                    break;
+                case Keys.ShiftKey:
+                    isShiftPressed = false;
+                    runordash = 0;
+                    break;
+            }
+
         }
 
 
@@ -136,6 +200,9 @@ namespace WindowsFormsApp24
             img = new Bitmap("jazz/Lstand.png");
             img.MakeTransparent(img.GetPixel(0, 0));
             pnn.standL.Add(img);
+
+            int j;
+
             for (int i = 0; i < 8; i++)
             {
                 /*img = new Bitmap("Lwalk" + i + ".png");// 3shan a5od dimensions el pic
@@ -144,20 +211,101 @@ namespace WindowsFormsApp24
                 img = new Bitmap("jazz/Rwalk_" + i + ".png");
                 img.MakeTransparent(img.GetPixel(0, 0));
                 pnn.walkR.Add(img);
-                
+
                 img = new Bitmap("jazz/Lwalk_" + i + ".png");
                 img.MakeTransparent(img.GetPixel(0, 0));
                 pnn.walkL.Add(img);
 
-                if(i < 2)
+                if(i < 5)
                 {
-                    img = new Bitmap("jazz/Rshoot_" + i + ".png");
+                    for (j = 0; j < 1; j++)
+                    {
+                        img = new Bitmap("jazz/Sjump_" + i + ".png");
+                        img.MakeTransparent(img.GetPixel(0, 0));
+                        pnn.jumpS.Add(img);
+                    }
+                }
+                if (i < 4)
+                {
+                    img = new Bitmap("jazz/Rstopshoot_" + i + ".png");
                     img.MakeTransparent(img.GetPixel(0, 0));
-                    pnn.shootR.Add(img);
+                    pnn.s_stopshootR.Add(img);
 
-                    img = new Bitmap("jazz/Lshoot_" + i + ".png");
+                    img = new Bitmap("jazz/Lstopshoot_" + i + ".png");
                     img.MakeTransparent(img.GetPixel(0, 0));
-                    pnn.shootL.Add(img);
+                    pnn.s_stopshootL.Add(img);
+
+                    img = new Bitmap("jazz/Rdash_" + i + ".png");
+                    img.MakeTransparent(img.GetPixel(0, 0));
+                    pnn.dashR.Add(img);
+
+                    img = new Bitmap("jazz/Ldash_" + i + ".png");
+                    img.MakeTransparent(img.GetPixel(0, 0));
+                    pnn.dashL.Add(img);
+
+                    img = new Bitmap("jazz/Rrun_" + i + ".png");
+                    img.MakeTransparent(img.GetPixel(0, 0));
+                    pnn.runR.Add(img);
+
+                    img = new Bitmap("jazz/Lrun_" + i + ".png");
+                    img.MakeTransparent(img.GetPixel(0, 0));
+                    pnn.runL.Add(img);
+                }
+
+                if (i < 3)
+                {
+                    img = new Bitmap("jazz/Sfall_" + i + ".png");
+                    img.MakeTransparent(img.GetPixel(0, 0));
+                    pnn.fallS.Add(img);
+                }
+
+                if (i < 2)
+                {
+                    for (j = 0; j < 3; j++)
+                    {
+                        img = new Bitmap("jazz/Rshoot_" + i + ".png");
+                        img.MakeTransparent(img.GetPixel(0, 0));
+                        pnn.shootR.Add(img);
+
+                        img = new Bitmap("jazz/Lshoot_" + i + ".png");
+                        img.MakeTransparent(img.GetPixel(0, 0));
+                        pnn.shootL.Add(img);
+
+                        img = new Bitmap("jazz/Rushoot_" + i + ".png");
+                        img.MakeTransparent(img.GetPixel(0, 0));
+                        pnn.shootupR.Add(img);
+
+                        img = new Bitmap("jazz/Lushoot_" + i + ".png");
+                        img.MakeTransparent(img.GetPixel(0, 0));
+                        pnn.shootupL.Add(img);
+                    }
+
+                    img = new Bitmap("jazz/Rlookup_" + i + ".png");
+                    img.MakeTransparent(img.GetPixel(0, 0));
+                    pnn.lookupR.Add(img);
+
+                    img = new Bitmap("jazz/Llookup_" + i + ".png");
+                    img.MakeTransparent(img.GetPixel(0, 0));
+                    pnn.lookupL.Add(img);
+
+                    img = new Bitmap("jazz/Rcrouch_" + i + ".png");
+                    img.MakeTransparent(img.GetPixel(0, 0));
+                    pnn.crouchR.Add(img);
+
+                    img = new Bitmap("jazz/Lcrouch_" + i + ".png");
+                    img.MakeTransparent(img.GetPixel(0, 0));
+                    pnn.crouchL.Add(img);
+                }
+
+                if (i == 0)
+                {
+                    img = new Bitmap("jazz/Rstopcrouch_" + i + ".png");
+                    img.MakeTransparent(img.GetPixel(0, 0));
+                    pnn.s_stopcrouchR.Add(img);
+
+                    img = new Bitmap("jazz/Lstopcrouch_" + i + ".png");
+                    img.MakeTransparent(img.GetPixel(0, 0));
+                    pnn.s_stopcrouchL.Add(img);
                 }
             }
             /*pnn.animations.Add(standRight);
@@ -187,13 +335,13 @@ namespace WindowsFormsApp24
             // l->r works but r->l doesnt
             CMultiImageActor hero = LHero[0];
             double run = 1;
-            if(isShiftPressed == true)
+            if (isShiftPressed == true)
             {
-                run = 1.5;
+                run = 2;
             }
             if (isRightPressed == true)
             {
-                if(hero.xDir == -1)
+                if (hero.xDir == -1)
                 {
                     hero.iFrame = -1;
                 }
@@ -222,7 +370,7 @@ namespace WindowsFormsApp24
             {
                 LHero[0].Y++;
             }
-            
+
         }
 
         void Jump()
@@ -231,62 +379,263 @@ namespace WindowsFormsApp24
             //bas fyh degree of difficulty fa dk b2a (if want change ask me)
 
             //re: azdk el howa yro7 b angle ymen aw shmal?
-            flying = true;
-            if (isSpacePressed == true)
+            if (jump_ct < jump_ct_max + min_jump && flying == true)
             {
                 jumptype = 0;
-                LHero[0].Y -= 30;
+                LHero[0].Y -= jump_pow;
+                /*if (jump_ct > 0 && isRightPressed == true)
+                {
+                    jumptype = 1;
+                    LHero[0].Y -= 30;
+                    LHero[0].X += 30;
+                }
+                if (isSpacePressed == true && isLeftPressed == true)
+                {
+                    jumptype = -1;
+                    LHero[0].Y -= 30;
+                    LHero[0].X -= 30;
+                }*/
+                /*if (isDownPressed == true && isSpacePressed == true)//super jump
+                {
+                    jumptype = 0;
+                    LHero[0].Y -= 50;
+                }*/
+                jump_ct++;
             }
-            if (isSpacePressed == true && isRightPressed == true)
+            else
             {
-                jumptype = 1;
-                LHero[0].Y -= 30;
-                LHero[0].X += 30;
-            }
-            if (isSpacePressed == true && isLeftPressed == true)
-            {
-                jumptype = -1;
-                LHero[0].Y -= 30;
-                LHero[0].X -= 30;
-            }
-            if (isDownPressed == true && isSpacePressed == true)//super jump
-            {
-                jumptype = 0;
-                LHero[0].Y -= 50;
+                jump_ct = 0;
+                jump_ct_max = 0;
+                flying = false;
             }
         }
 
         private void AnimateHero()
         {
             CMultiImageActor hero = LHero[0];
-            int curr = 0;
+            int old = hero.currentAnimation;
 
-            if (isShiftPressed == true)
-            {
-            }
             if (isRightPressed == true)
             {
-                //LHero[0].xDir = 1;
-                LHero[0].currentAnimation = 2;
-            }
-            else if (isLeftPressed == true)
-            {
-                //LHero[0].xDir = -1;
-                LHero[0].currentAnimation = 3;
-            }
-            else
-            {
-                hero.iFrame = 0;
-                if (hero.xDir == 1)
+                if (isShiftPressed == true)
                 {
-                    LHero[0].currentAnimation = 0;
+                    runordash++;
+                    if (runordash < hero.runR.Count)
+                    {
+                        hero.currentAnimation = 12;
+                    }
+                    else
+                    {
+                        hero.currentAnimation = 10;
+                    }
                 }
                 else
                 {
-                    hero.currentAnimation = 1;
+                    LHero[0].currentAnimation = 2;
                 }
             }
+            else if (isLeftPressed == true)
+            {
+                if (isShiftPressed == true)
+                {
+                    runordash++;
+                    if (runordash < hero.runR.Count)
+                    {
+                        hero.currentAnimation = 13;
+                    }
+                    else
+                    {
+                        hero.currentAnimation = 11;
+                    }
+                }
+                else
+                {
+                    LHero[0].currentAnimation = 3;
+                }
+            }
+            else if (isDownPressed == true)
+            {
+                if (hero.xDir == 1)
+                {
+                    /*if (isFPressed == true)
+                    {
+                        hero.currentAnimation = 14;
+                    }
+                    else
+                    {*/
+                    /*if (stopFire > 0)
+                    {
+                        hero.currentAnimation = 6;
+                    }
+                    else
+                    {*/
+                    if (hero.iFrame == 1)
+                    {
+                        hero.iFrame = 0;
+                    }
+                    hero.currentAnimation = 14;
+                    //}
+                    //}
+                }
+                else
+                {
+                    /*if (isFPressed == true)
+                    {
+                        hero.currentAnimation = 14;
+                    }
+                    else
+                    {*/
+                    /*if (stopFire > 0)
+                    {
+                        hero.currentAnimation = 6;
+                    }
+                    else
+                    {*/
+                    if (hero.iFrame == 1)
+                    {
+                        hero.iFrame = 0;
+                    }
+                    hero.currentAnimation = 15;
+                    //}
+                    //}
+                }
+            }
+            else if (isUpPressed == true)
+            {
 
+                if (hero.xDir == 1)
+                {
+                    if (hero.xDir == 1)
+                    {
+                        if (isFPressed == true)
+                        {
+                            hero.currentAnimation = 20;
+                        }
+                        else
+                        {
+                            if (stopFire > 0)
+                            {
+                                hero.currentAnimation = 6;
+                            }
+                            else
+                            {
+                                if (flying == true)
+                                {
+                                    hero.currentAnimation = 18;
+                                }
+                                else if (gravity == true)
+                                {
+                                    hero.currentAnimation = 19;
+                                }
+                                else
+                                {
+                                    if (hero.iFrame == 1)
+                                    {
+                                        hero.iFrame = 0;
+                                    }
+                                    hero.currentAnimation = 8;
+                                }
+                                
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    if (isFPressed == true)
+                    {
+                        hero.currentAnimation = 21;
+                    }
+                    else
+                    {
+                        if (stopFire > 0)
+                        {
+                            hero.currentAnimation = 7;
+                        }
+                        else
+                        {
+                            if (flying == true)
+                            {
+                                hero.currentAnimation = 18;
+                            }
+                            else if (gravity == true)
+                            {
+                                hero.currentAnimation = 19;
+                            }
+                            else
+                            {
+                                if (hero.iFrame == 1)
+                                {
+                                    hero.iFrame = 0;
+                                }
+                                hero.currentAnimation = 9;
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (hero.xDir == 1)
+                {
+
+                    if (isFPressed == true)
+                    {
+                        hero.currentAnimation = 4;
+                    }
+                    else
+                    {
+                        if (stopFire > 0)
+                        {
+                            hero.currentAnimation = 6;
+                        }
+                        else
+                        {
+                            if (flying == true)
+                            {
+                                hero.currentAnimation = 18;
+                            }
+                            else if(gravity == true)
+                            {
+                                hero.currentAnimation = 19;
+                            }
+                            else
+                            {
+                                hero.currentAnimation = 0;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    if (isFPressed == true)
+                    {
+                        hero.currentAnimation = 5;
+                    }
+                    else
+                    {
+                        if (stopFire > 0)
+                        {
+                            hero.currentAnimation = 7;
+                        }
+                        else
+                        {
+                            if (flying == true)
+                            {
+                                hero.currentAnimation = 18;
+                            }
+                            else if (gravity == true)
+                            {
+                                hero.currentAnimation = 19;
+                            }
+                            else
+                            {
+                                hero.currentAnimation = 1;
+                            }
+                        }
+                    }
+                }
+            }
             /*if (isLeftPressed == false && isRightPressed == false)
             {
                 hero.iFrame = 0;
@@ -300,7 +649,26 @@ namespace WindowsFormsApp24
                 }
             }*/
 
-            hero.iFrame++;
+            if (hero.currentAnimation != old)
+            {
+                hero.iFrame = 0;
+                if (old == 6 || old == 7)
+                {
+                    stopFire = 0;
+                }
+                if (old == 14 && hero.currentAnimation == 0)
+                {
+                    hero.currentAnimation = 16;
+                }
+                /*if((old != 12 || hero.currentAnimation == 10 && (old != 13 || hero.currentAnimation != 11))
+                {
+                    runordash = 0;
+                }*/
+            }
+            else
+            {
+                hero.iFrame++;
+            }
         }
 
         void createbullets()
@@ -354,7 +722,7 @@ namespace WindowsFormsApp24
 
         void createlazer()
         {
-            int width = 200,margin=10;
+            int width = 200, margin = 10;
             cActor pnn = new cActor();
             if (LHero[0].xDir == 1)
             {
@@ -362,7 +730,7 @@ namespace WindowsFormsApp24
             }
             else
             {
-                pnn.x = LHero[0].X - width+ margin;
+                pnn.x = LHero[0].X - width + margin;
             }
             pnn.y = LHero[0].Y + LHero[0].imgs[LHero[0].iFrame].Height / 2 + 11;
             pnn.w = width;
@@ -386,32 +754,42 @@ namespace WindowsFormsApp24
 
         void Gravity()
         {
-            if (gravity == true)
+            int ntmp = ClientSize.Height / 2 - LHero[0].standL[0].Height + 16;
+            if (isOnPlatform == true || isOnLadder == true || flying == true || (LHero[0].Y >= ntmp))
             {
-
-            
-            //clientsize.height/2 for testing (htt8yr)
-            //rename ntmp
-            int ntmp = ClientSize.Height / 2 - LHero[0].standL[0].Height+16;
-            if (LHero[0].Y <= ntmp && jumptype == 0)//jump type:anwa3 falling
-            {
-                LHero[0].Y += 3;
-            }
-            else if (LHero[0].Y <= ntmp && jumptype == 1)
-            {
-                LHero[0].Y += 3;
-                LHero[0].X++;
-            }
-            else if (LHero[0].Y <= ntmp && jumptype == -1)
-            {
-                LHero[0].Y += 3;
-                LHero[0].X--;
+                gravity = false;
+                if(flying == false)
+                {
+                    jump_cd = 0;
+                }
             }
             else
             {
-                flying = false;
+                gravity = true;
             }
-
+            if (gravity == true)
+            {
+                //clientsize.height/2 for testing (htt8yr)
+                //rename ntmp
+                if (LHero[0].Y <= ntmp && jumptype == 0)//jump type:anwa3 falling
+                {
+                    LHero[0].Y += gravity_speed;
+                }
+                else if (LHero[0].Y <= ntmp && jumptype == 1)
+                {
+                    LHero[0].Y += gravity_speed;
+                    LHero[0].X++;
+                }
+                else if (LHero[0].Y <= ntmp && jumptype == -1)
+                {
+                    LHero[0].Y += gravity_speed;
+                    LHero[0].X--;
+                }
+                else
+                {
+                    //
+                    //flying = false;
+                }
             }
         }
 
@@ -464,13 +842,13 @@ namespace WindowsFormsApp24
                     &&LHero[0].X<=plats[i].X+plats[i].img.Width))
                 {
                     flying=false;
-                    gravity=false;
+                    isOnPlatform = true;
                     LHero[0].yDir=plats[i].yDir;
                     break;
                 }
                 else
                 {
-                    gravity=true;
+                    isOnPlatform = false;
                     LHero[0].yDir=0;
                 }
             }
@@ -493,14 +871,16 @@ namespace WindowsFormsApp24
 
         void ladderschecker()
         {
+            int ct = 0;
             int heroBottom = LHero[0].Y + LHero[0].standL[0].Height/2;
             for(int i = 0; i < ladder.Count; i++)
             {
                 if ((heroBottom <= ladder[i].Y+ladder[i].img.Height && heroBottom>=ladder[i].Y)&&(LHero[0].X>=ladder[i].X
                     &&LHero[0].X<=ladder[i].X+ladder[i].img.Width))
                 {
+                    ct++;
                     flying=false;
-                    gravity=false;
+                    isOnLadder = true;
                     if (isUpPressed == true)
                     {
                         LHero[0].Y-=5;
@@ -511,7 +891,10 @@ namespace WindowsFormsApp24
                     }
                     break;
                 }
-
+            }
+            if(ct == 0)
+            {
+                isOnLadder = false;
             }
         }
         private void CoolDowns()
@@ -524,6 +907,18 @@ namespace WindowsFormsApp24
             {
                 MoveLock--;
             }
+            if (stopFire > 0)
+            {
+                stopFire--;
+            }
+            if (jump_cd > 0)
+            {
+                jump_cd--;
+            }
+            /*if(runordash > 0)
+            {
+                runordash--;
+            }*/
         }
 
         private void Form1_Paint(object sender, PaintEventArgs e)
@@ -603,9 +998,37 @@ namespace WindowsFormsApp24
         //5
         public List<Bitmap> shootL = new List<Bitmap>();
         //6
-        public List<Bitmap> stopshootR = new List<Bitmap>();
+        public List<Bitmap> s_stopshootR = new List<Bitmap>();
         //7
-        public List<Bitmap> stopshootL = new List<Bitmap>();
+        public List<Bitmap> s_stopshootL = new List<Bitmap>();
+        //8
+        public List<Bitmap> lookupR = new List<Bitmap>();
+        //9
+        public List<Bitmap> lookupL = new List<Bitmap>();
+        //10
+        public List<Bitmap> dashR = new List<Bitmap>();
+        //11
+        public List<Bitmap> dashL = new List<Bitmap>();
+        //12
+        public List<Bitmap> runR = new List<Bitmap>();
+        //13
+        public List<Bitmap> runL = new List<Bitmap>();
+        //14
+        public List<Bitmap> crouchR = new List<Bitmap>();
+        //15
+        public List<Bitmap> crouchL = new List<Bitmap>();
+        //16
+        public List<Bitmap> s_stopcrouchR = new List<Bitmap>();
+        //17
+        public List<Bitmap> s_stopcrouchL = new List<Bitmap>();
+        //18
+        public List<Bitmap> jumpS = new List<Bitmap>();
+        //19
+        public List<Bitmap> fallS = new List<Bitmap>();
+        //20
+        public List<Bitmap> shootupR = new List<Bitmap>();
+        //21
+        public List<Bitmap> shootupL = new List<Bitmap>();
         public Bitmap img;
         public List<Bitmap> imgs;
         public int iFrame;
@@ -632,6 +1055,57 @@ namespace WindowsFormsApp24
                     break;
                 case 4:
                     ltmp = shootR;
+                    break;
+                case 5:
+                    ltmp = shootL;
+                    break;
+                case 6:
+                    ltmp = s_stopshootR;
+                    break;
+                case 7:
+                    ltmp = s_stopshootL;
+                    break;
+                case 8:
+                    ltmp = lookupR;
+                    break;
+                case 9:
+                    ltmp = lookupL;
+                    break;
+                case 10:
+                    ltmp = dashR;
+                    break;
+                case 11:
+                    ltmp = dashL;
+                    break;
+                case 12:
+                    ltmp = runR;
+                    break;
+                case 13:
+                    ltmp = runL;
+                    break;
+                case 14:
+                    ltmp = crouchR;
+                    break;
+                case 15:
+                    ltmp = crouchL;
+                    break;
+                case 16:
+                    ltmp = s_stopcrouchR;
+                    break;
+                case 17:
+                    ltmp = s_stopcrouchL;
+                    break;
+                case 18:
+                    ltmp = jumpS;
+                    break;
+                case 19:
+                    ltmp = fallS;
+                    break;
+                case 20:
+                    ltmp = shootupR;
+                    break;
+                case 21:
+                    ltmp = shootupL;
                     break;
             }
             return ltmp;

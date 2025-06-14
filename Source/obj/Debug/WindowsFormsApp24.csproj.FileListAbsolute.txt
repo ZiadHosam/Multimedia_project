@@ -16,3 +16,12 @@ C:\Users\moaster\source\repos\Multimedia_project\Source\obj\Debug\WindowsFormsAp
 C:\Users\moaster\source\repos\Multimedia_project\Source\obj\Debug\WindowsFormsApp24.exe
 C:\Users\moaster\source\repos\Multimedia_project\Source\obj\Debug\WindowsFormsApp24.pdb
 C:\Users\Ziad\Documents\GitHub\Multimedia_project\Source\obj\Debug\WindowsFormsApp24.csproj.AssemblyReference.cache
+\\DESKTOP-KV85QR8\uni temp\mm\Multimedia_project\Source\obj\Debug\WindowsFormsApp24.csproj.AssemblyReference.cache
+\\DESKTOP-KV85QR8\uni temp\mm\Multimedia_project\Source\obj\Debug\WindowsFormsApp24.Properties.Resources.resources
+\\DESKTOP-KV85QR8\uni temp\mm\Multimedia_project\Source\obj\Debug\WindowsFormsApp24.csproj.GenerateResource.cache
+\\DESKTOP-KV85QR8\uni temp\mm\Multimedia_project\Source\obj\Debug\WindowsFormsApp24.csproj.CoreCompileInputs.cache
+\\DESKTOP-KV85QR8\uni temp\mm\Multimedia_project\Source\obj\Debug\WindowsFormsApp24.exe
+\\DESKTOP-KV85QR8\uni temp\mm\Multimedia_project\Source\obj\Debug\WindowsFormsApp24.pdb
+\\DESKTOP-KV85QR8\uni temp\mm\Multimedia_project\Source\bin\Debug\WindowsFormsApp24.exe.config
+\\DESKTOP-KV85QR8\uni temp\mm\Multimedia_project\Source\bin\Debug\WindowsFormsApp24.exe
+\\DESKTOP-KV85QR8\uni temp\mm\Multimedia_project\Source\bin\Debug\WindowsFormsApp24.pdb
