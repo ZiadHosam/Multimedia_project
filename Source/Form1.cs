@@ -20,7 +20,7 @@ namespace WindowsFormsApp24
         List<CMultiImageActor> ladder = new List<CMultiImageActor>();
         List<cActor> bullet = new List<cActor>();
         List<cActor> lazer = new List<cActor>();
-
+        List<cmap> Lmap = new List<cmap>();
         int jumptype;
         bool flying = false;
         bool gravity = false;
@@ -34,6 +34,7 @@ namespace WindowsFormsApp24
         bool isFPressed = false;
         bool isOnPlatform = false;
         bool isOnLadder = false;
+        bool isOnGround = false;
 
         int ctTick = 0;
         int FireRate = 0;
@@ -49,7 +50,7 @@ namespace WindowsFormsApp24
         int jump_pow = 20;
         int jump_cd = 0;
         int jump_cd_reset = 20;
-        int gravity_speed = 10;
+        int gravity_speed = 12;
         public Form1()
         {
             this.WindowState = FormWindowState.Maximized;
@@ -65,6 +66,7 @@ namespace WindowsFormsApp24
         private void Form1_Load(object sender, EventArgs e)
         {
             CreateHero();
+            createmap();
             platforms();
             ladders();
 
@@ -82,6 +84,7 @@ namespace WindowsFormsApp24
             platmove();
             platchecker();
             ladderschecker();
+            checkground();
             CoolDowns();
 
             ctTick++;
@@ -170,7 +173,7 @@ namespace WindowsFormsApp24
                     break;
                 case Keys.Space:
                     isSpacePressed = false;
-                    if(jump_ct_max > 0)
+                    if (jump_ct_max > 0)
                     {
                         jump_ct_max /= 2;
                         jump_cd = jump_cd_reset;
@@ -216,13 +219,21 @@ namespace WindowsFormsApp24
                 img.MakeTransparent(img.GetPixel(0, 0));
                 pnn.walkL.Add(img);
 
-                if(i < 5)
+                if (i < 5)
                 {
                     for (j = 0; j < 1; j++)
                     {
                         img = new Bitmap("jazz/Sjump_" + i + ".png");
                         img.MakeTransparent(img.GetPixel(0, 0));
                         pnn.jumpS.Add(img);
+
+                        img = new Bitmap("jazz/Rjump_" + i + ".png");
+                        img.MakeTransparent(img.GetPixel(0, 0));
+                        pnn.jumpR.Add(img);
+
+                        img = new Bitmap("jazz/Ljump_" + i + ".png");
+                        img.MakeTransparent(img.GetPixel(0, 0));
+                        pnn.jumpL.Add(img);
                     }
                 }
                 if (i < 4)
@@ -257,6 +268,14 @@ namespace WindowsFormsApp24
                     img = new Bitmap("jazz/Sfall_" + i + ".png");
                     img.MakeTransparent(img.GetPixel(0, 0));
                     pnn.fallS.Add(img);
+
+                    img = new Bitmap("jazz/Rfall_" + i + ".png");
+                    img.MakeTransparent(img.GetPixel(0, 0));
+                    pnn.fallR.Add(img);
+
+                    img = new Bitmap("jazz/Lfall_" + i + ".png");
+                    img.MakeTransparent(img.GetPixel(0, 0));
+                    pnn.fallL.Add(img);
                 }
 
                 if (i < 2)
@@ -278,6 +297,14 @@ namespace WindowsFormsApp24
                         img = new Bitmap("jazz/Lushoot_" + i + ".png");
                         img.MakeTransparent(img.GetPixel(0, 0));
                         pnn.shootupL.Add(img);
+
+                        img = new Bitmap("jazz/Rcshoot_" + i + ".png");
+                        img.MakeTransparent(img.GetPixel(0, 0));
+                        pnn.cshootR.Add(img);
+
+                        img = new Bitmap("jazz/Lcshoot_" + i + ".png");
+                        img.MakeTransparent(img.GetPixel(0, 0));
+                        pnn.cshootL.Add(img);
                     }
 
                     img = new Bitmap("jazz/Rlookup_" + i + ".png");
@@ -288,6 +315,11 @@ namespace WindowsFormsApp24
                     img.MakeTransparent(img.GetPixel(0, 0));
                     pnn.lookupL.Add(img);
 
+
+                }
+
+                if (i == 0)
+                {
                     img = new Bitmap("jazz/Rcrouch_" + i + ".png");
                     img.MakeTransparent(img.GetPixel(0, 0));
                     pnn.crouchR.Add(img);
@@ -295,10 +327,7 @@ namespace WindowsFormsApp24
                     img = new Bitmap("jazz/Lcrouch_" + i + ".png");
                     img.MakeTransparent(img.GetPixel(0, 0));
                     pnn.crouchL.Add(img);
-                }
 
-                if (i == 0)
-                {
                     img = new Bitmap("jazz/Rstopcrouch_" + i + ".png");
                     img.MakeTransparent(img.GetPixel(0, 0));
                     pnn.s_stopcrouchR.Add(img);
@@ -306,6 +335,14 @@ namespace WindowsFormsApp24
                     img = new Bitmap("jazz/Lstopcrouch_" + i + ".png");
                     img.MakeTransparent(img.GetPixel(0, 0));
                     pnn.s_stopcrouchL.Add(img);
+                    
+                    img = new Bitmap("jazz/Rstrtcshoot_" + i + ".png");
+                    img.MakeTransparent(img.GetPixel(0, 0));
+                    pnn.strtcshootR.Add(img);
+
+                    img = new Bitmap("jazz/Lstrtcshoot_" + i + ".png");
+                    img.MakeTransparent(img.GetPixel(0, 0));
+                    pnn.strtcshootL.Add(img);
                 }
             }
             /*pnn.animations.Add(standRight);
@@ -313,8 +350,8 @@ namespace WindowsFormsApp24
             pnn.animations.Add(walkLeft);
             pnn.animations.Add(walkRight);
 */
-            pnn.X = ClientSize.Width / 2;
-            pnn.Y = ClientSize.Height / 2 - (pnn.standR[0].Height / 2);
+            pnn.X = ClientSize.Width / 4;
+            pnn.Y = ClientSize.Height / 4;
             pnn.xDir = 1;
             pnn.currentAnimation = 0;
             LHero.Add(pnn);
@@ -337,8 +374,12 @@ namespace WindowsFormsApp24
             double run = 1;
             if (isShiftPressed == true)
             {
-                run = 2;
+                run += 1;
             }
+            /*if(flying == true || gravity == true)
+            {
+                run += 0.5;
+            }*/
             if (isRightPressed == true)
             {
                 if (hero.xDir == -1)
@@ -419,84 +460,120 @@ namespace WindowsFormsApp24
             {
                 if (isShiftPressed == true)
                 {
-                    runordash++;
-                    if (runordash < hero.runR.Count)
+                    if (flying == true)
                     {
-                        hero.currentAnimation = 12;
+                        hero.currentAnimation = 26;
+                    }
+                    else if (gravity == true)
+                    {
+                        hero.currentAnimation = 28;
                     }
                     else
                     {
-                        hero.currentAnimation = 10;
+                        runordash++;
+                        if (runordash < hero.runR.Count)
+                        {
+                            hero.currentAnimation = 12;
+                        }
+                        else
+                        {
+                            hero.currentAnimation = 10;
+                        }
                     }
                 }
                 else
                 {
-                    LHero[0].currentAnimation = 2;
+                    if (flying == true)
+                    {
+                        hero.currentAnimation = 26;
+                    }
+                    else if (gravity == true)
+                    {
+                        hero.currentAnimation = 28;
+                    }
+                    else
+                    {
+                        hero.currentAnimation = 2;
+                    }
                 }
             }
             else if (isLeftPressed == true)
             {
                 if (isShiftPressed == true)
                 {
-                    runordash++;
-                    if (runordash < hero.runR.Count)
+                    if (flying == true)
                     {
-                        hero.currentAnimation = 13;
+                        hero.currentAnimation = 27;
+                    }
+                    else if (gravity == true)
+                    {
+                        hero.currentAnimation = 29;
                     }
                     else
                     {
-                        hero.currentAnimation = 11;
+                        runordash++;
+                        if (runordash < hero.runR.Count)
+                        {
+                            hero.currentAnimation = 13;
+                        }
+                        else
+                        {
+                            hero.currentAnimation = 11;
+                        }
                     }
                 }
                 else
                 {
-                    LHero[0].currentAnimation = 3;
+                    if (flying == true)
+                    {
+                        hero.currentAnimation = 27;
+                    }
+                    else if (gravity == true)
+                    {
+                        hero.currentAnimation = 29;
+                    }
+                    else
+                    {
+                        hero.currentAnimation = 3;
+                    }
                 }
             }
-            else if (isDownPressed == true)
+            else if (isDownPressed == true && gravity == false && flying == false)
             {
                 if (hero.xDir == 1)
                 {
-                    /*if (isFPressed == true)
+                    if (isFPressed == true)
+                    {
+                        hero.currentAnimation = 24;
+                    }
+                    /*else
+                    {
+                    if (stopFire > 0)
+                    {
+                        hero.currentAnimation = 6;
+                    }*/
+                    else
                     {
                         hero.currentAnimation = 14;
                     }
-                    else
-                    {*/
-                    /*if (stopFire > 0)
-                    {
-                        hero.currentAnimation = 6;
-                    }
-                    else
-                    {*/
-                    if (hero.iFrame == 1)
-                    {
-                        hero.iFrame = 0;
-                    }
-                    hero.currentAnimation = 14;
-                    //}
                     //}
                 }
                 else
                 {
-                    /*if (isFPressed == true)
+                    if (isFPressed == true)
                     {
-                        hero.currentAnimation = 14;
+                        hero.currentAnimation = 25;
                     }
                     else
-                    {*/
+                    {
                     /*if (stopFire > 0)
                     {
                         hero.currentAnimation = 6;
                     }
                     else
                     {*/
-                    if (hero.iFrame == 1)
-                    {
-                        hero.iFrame = 0;
+                        hero.currentAnimation = 15;
                     }
-                    hero.currentAnimation = 15;
-                    //}
                     //}
                 }
             }
@@ -531,11 +608,11 @@ namespace WindowsFormsApp24
                                 {
                                     if (hero.iFrame == 1)
                                     {
-                                        hero.iFrame = 0;
+                                        hero.frame_lock = 1;
                                     }
                                     hero.currentAnimation = 8;
                                 }
-                                
+
                             }
                         }
                     }
@@ -566,7 +643,7 @@ namespace WindowsFormsApp24
                             {
                                 if (hero.iFrame == 1)
                                 {
-                                    hero.iFrame = 0;
+                                    hero.frame_lock = 1;
                                 }
                                 hero.currentAnimation = 9;
                             }
@@ -595,7 +672,7 @@ namespace WindowsFormsApp24
                             {
                                 hero.currentAnimation = 18;
                             }
-                            else if(gravity == true)
+                            else if (gravity == true)
                             {
                                 hero.currentAnimation = 19;
                             }
@@ -652,25 +729,101 @@ namespace WindowsFormsApp24
             if (hero.currentAnimation != old)
             {
                 hero.iFrame = 0;
+                hero.frame_lock = 0;
                 if (old == 6 || old == 7)
                 {
                     stopFire = 0;
                 }
+
                 if (old == 14 && hero.currentAnimation == 0)
                 {
                     hero.currentAnimation = 16;
+                }
+
+                if (old == 0 && hero.currentAnimation == 14)
+                {
+                    hero.currentAnimation = 16;
+                }
+
+                if (old == 15 && hero.currentAnimation == 1)
+                {
+                    hero.currentAnimation = 17;
+                }
+
+                if (old == 1 && hero.currentAnimation == 15)
+                {
+                    hero.currentAnimation = 17;
+                }
+                if (old == 14 && hero.currentAnimation == 24)
+                {
+                    hero.currentAnimation = 22;
+                }
+
+                if(old == 15 && hero.currentAnimation == 25)
+                {
+                    hero.currentAnimation = 23;
                 }
                 /*if((old != 12 || hero.currentAnimation == 10 && (old != 13 || hero.currentAnimation != 11))
                 {
                     runordash = 0;
                 }*/
             }
-            else
+            else if(hero.frame_lock == 0)
             {
                 hero.iFrame++;
             }
         }
 
+        void createmap()
+        {
+            cmap tmp;
+            int tmp_ct = 70;
+
+            for (int i = 0; i < tmp_ct; i++)
+            {
+                tmp = new cmap(1);
+                tmp.x = 0 + (tmp.tile.Width * i);
+                tmp.y = ClientSize.Height / 2 + tmp.tile.Height;
+                tmp.ct = tmp_ct;
+                Lmap.Add(tmp);
+
+                tmp = new cmap(2);
+                tmp.x = 0 + (tmp.tile.Width * i);
+                tmp.y = 0;
+                tmp.ct = (ClientSize.Height / 2)/ tmp.tile.Height + 1;
+                Lmap.Add(tmp);
+            }
+
+            tmp = new cmap(0);
+            tmp.x = 0; 
+            tmp.y = ClientSize.Height/2;
+            tmp.ct = tmp_ct;
+            Lmap.Add(tmp);
+        }
+        void checkground()
+        {
+            CMultiImageActor hero = LHero[0];
+            int y = hero.hitbox_down();
+            int ct = 0;
+            for(int i = 0; i < Lmap.Count;i++)
+            {
+                cmap m = Lmap[i];
+                if(m.o == 0)
+                {
+                    if((y + 5) >= m.y /*&& hero.X >= m.x && hero.X <= (m.x + m.tile.Width)*/)
+                    {
+                        isOnGround = true;
+                        flying = false;
+                        ct++;
+                        break;
+                    }
+                }
+            }
+            if(ct == 0)
+            {
+                isOnGround = false;
+            }
+        }
         void createbullets()
         {
             //mfrod nzbot el x,y el bttl3 mnha el bullet 3la 7sb bases fen
@@ -754,11 +907,11 @@ namespace WindowsFormsApp24
 
         void Gravity()
         {
-            int ntmp = ClientSize.Height / 2 - LHero[0].standL[0].Height + 16;
-            if (isOnPlatform == true || isOnLadder == true || flying == true || (LHero[0].Y >= ntmp))
+            //int ntmp = ClientSize.Height / 2 - LHero[0].standL[0].Height + 16;
+            if (isOnPlatform == true || isOnLadder == true || flying == true || isOnGround == true)
             {
                 gravity = false;
-                if(flying == false)
+                if (flying == false)
                 {
                     jump_cd = 0;
                 }
@@ -771,16 +924,16 @@ namespace WindowsFormsApp24
             {
                 //clientsize.height/2 for testing (htt8yr)
                 //rename ntmp
-                if (LHero[0].Y <= ntmp && jumptype == 0)//jump type:anwa3 falling
+                if (/*LHero[0].Y <= ntmp &&*/ jumptype == 0)//jump type:anwa3 falling
                 {
                     LHero[0].Y += gravity_speed;
                 }
-                else if (LHero[0].Y <= ntmp && jumptype == 1)
+                else if (/*LHero[0].Y <= ntmp &&*/ jumptype == 1)
                 {
                     LHero[0].Y += gravity_speed;
                     LHero[0].X++;
                 }
-                else if (LHero[0].Y <= ntmp && jumptype == -1)
+                else if (/*LHero[0].Y <= ntmp &&*/ jumptype == -1)
                 {
                     LHero[0].Y += gravity_speed;
                     LHero[0].X--;
@@ -795,104 +948,104 @@ namespace WindowsFormsApp24
 
         void platforms()
         {
-            int x=850,y=350;
-            for(int i = 0; i < 2; i++)
-            {   
-            CMultiImageActor pnn = new CMultiImageActor();
-            pnn.img = new Bitmap("jazz/platf.png");
-            pnn.img.MakeTransparent(pnn.img.GetPixel(0, 0));
-            pnn.X=x;
-            pnn.Y=y;
-            pnn.yDir=1;
-            plats.Add(pnn);
-                x+=100;
-                y-=50;
+            int x = 850, y = 350;
+            for (int i = 0; i < 2; i++)
+            {
+                CMultiImageActor pnn = new CMultiImageActor();
+                pnn.img = new Bitmap("jazz/platf.png");
+                pnn.img.MakeTransparent(pnn.img.GetPixel(0, 0));
+                pnn.X = x;
+                pnn.Y = y;
+                pnn.yDir = 1;
+                plats.Add(pnn);
+                x += 100;
+                y -= 50;
             }
         }
         void platmove()
         {
             //elevator
-            for(int i = 0; i < plats.Count; i++)
+            for (int i = 0; i < plats.Count; i++)
             {
                 if (plats[i].yDir == -1)
                 {
-                plats[i].Y--;
+                    plats[i].Y--;
                 }
                 if (plats[i].yDir == 1)
                 {
-                plats[i].Y++;
+                    plats[i].Y++;
                 }
 
-                if (plats[i].Y <=320 )
+                if (plats[i].Y <= 320)
                 {
-                plats[i].yDir=1;
+                    plats[i].yDir = 1;
                 }
-                if (plats[i].Y >=360 )
+                if (plats[i].Y >= 360)
                 {
-                plats[i].yDir=-1;
+                    plats[i].yDir = -1;
                 }
             }
         }
         void platchecker()
         {
-            int heroBottom = LHero[0].Y + LHero[0].standL[0].Height/2;
-            for(int i = 0; i < plats.Count; i++)
+            int heroBottom = LHero[0].Y + LHero[0].standL[0].Height / 2;
+            for (int i = 0; i < plats.Count; i++)
             {
-                if ((heroBottom <= plats[i].Y+5 && heroBottom>=plats[i].Y)&&(LHero[0].X>=plats[i].X
-                    &&LHero[0].X<=plats[i].X+plats[i].img.Width))
+                if ((heroBottom <= plats[i].Y + 5 && heroBottom >= plats[i].Y) && (LHero[0].X >= plats[i].X
+                    && LHero[0].X <= plats[i].X + plats[i].img.Width))
                 {
-                    flying=false;
+                    flying = false;
                     isOnPlatform = true;
-                    LHero[0].yDir=plats[i].yDir;
+                    LHero[0].yDir = plats[i].yDir;
                     break;
                 }
                 else
                 {
                     isOnPlatform = false;
-                    LHero[0].yDir=0;
+                    LHero[0].yDir = 0;
                 }
             }
         }
 
         void ladders()
         {
-            int x=550,y=250;
-              
+            int x = 550, y = 250;
+
             CMultiImageActor pnn = new CMultiImageActor();
             pnn.img = new Bitmap("jazz/ladder.png");
             pnn.img.MakeTransparent(pnn.img.GetPixel(0, 0));
-            pnn.X=x;
-            pnn.Y=y;
-            pnn.yDir=1;
+            pnn.X = x;
+            pnn.Y = y;
+            pnn.yDir = 1;
             ladder.Add(pnn);
-                
-            
+
+
         }
 
         void ladderschecker()
         {
             int ct = 0;
-            int heroBottom = LHero[0].Y + LHero[0].standL[0].Height/2;
-            for(int i = 0; i < ladder.Count; i++)
+            int heroBottom = LHero[0].Y + LHero[0].standL[0].Height / 2;
+            for (int i = 0; i < ladder.Count; i++)
             {
-                if ((heroBottom <= ladder[i].Y+ladder[i].img.Height && heroBottom>=ladder[i].Y)&&(LHero[0].X>=ladder[i].X
-                    &&LHero[0].X<=ladder[i].X+ladder[i].img.Width))
+                if ((heroBottom <= ladder[i].Y + ladder[i].img.Height && heroBottom >= ladder[i].Y) && (LHero[0].X >= ladder[i].X
+                    && LHero[0].X <= ladder[i].X + ladder[i].img.Width))
                 {
                     ct++;
-                    flying=false;
+                    flying = false;
                     isOnLadder = true;
                     if (isUpPressed == true)
                     {
-                        LHero[0].Y-=5;
+                        LHero[0].Y -= 5;
                     }
                     if (isDownPressed == true)
                     {
-                        LHero[0].Y+=5;
+                        LHero[0].Y += 5;
                     }
                     break;
                 }
             }
-            if(ct == 0)
+            if (ct == 0)
             {
                 isOnLadder = false;
             }
@@ -939,6 +1092,11 @@ namespace WindowsFormsApp24
         {
             g2.Clear(Color.Black);
 
+            for(int i = 0; i < Lmap.Count; i++)
+            {
+                cmap m = Lmap[i];
+                m.drawmyself(g2);
+            }
 
             for (int i = 0; i < bullet.Count; i++)
             {
@@ -954,12 +1112,12 @@ namespace WindowsFormsApp24
 
             for (int i = 0; i < plats.Count; i++)
             {
-                g2.DrawImage(plats[i].img,plats[i].X,plats[i].Y);
+                g2.DrawImage(plats[i].img, plats[i].X, plats[i].Y);
             }
 
             for (int i = 0; i < ladder.Count; i++)
             {
-                g2.DrawImage(ladder[i].img,ladder[i].X,ladder[i].Y);
+                g2.DrawImage(ladder[i].img, ladder[i].X, ladder[i].Y);
             }
 
             for (int i = 0; i < LHero.Count; i++)
@@ -967,14 +1125,14 @@ namespace WindowsFormsApp24
                 CMultiImageActor hero = LHero[i];
                 //List<Bitmap> currentFrames = hero.animations[LHero[i].currentAnimation];
                 //Bitmap frame = currentFrames[k];
-                
+
                 Bitmap frame = hero.curr_F();
                 //g2.DrawImage(frame, LHero[i].X, LHero[i].Y, frame.Width + 10, frame.Height + 10);
                 g2.DrawImage(frame, hero.X - (frame.Width / 2), hero.Y - (frame.Height / 2));
             }
 
             //test line
-            g2.DrawLine(Pens.LightGray, 0, ClientSize.Height / 2, ClientSize.Width, ClientSize.Height / 2);
+            //g2.DrawLine(Pens.LightGray, 0, ClientSize.Height / 2, ClientSize.Width, ClientSize.Height / 2);
         }
     }
     public class cActor
@@ -1029,13 +1187,30 @@ namespace WindowsFormsApp24
         public List<Bitmap> shootupR = new List<Bitmap>();
         //21
         public List<Bitmap> shootupL = new List<Bitmap>();
+        //22
+        public List<Bitmap> strtcshootR = new List<Bitmap>();
+        //23
+        public List<Bitmap> strtcshootL = new List<Bitmap>();
+        //24
+        public List<Bitmap> cshootR = new List<Bitmap>();
+        //25
+        public List<Bitmap> cshootL = new List<Bitmap>();
+        //26
+        public List<Bitmap> jumpR = new List<Bitmap>();
+        //27
+        public List<Bitmap> jumpL = new List<Bitmap>();
+        //28
+        public List<Bitmap> fallR = new List<Bitmap>();
+        //29
+        public List<Bitmap> fallL = new List<Bitmap>();
         public Bitmap img;
         public List<Bitmap> imgs;
         public int iFrame;
-        public int xDir = 0; 
-        public int yDir = 0; 
+        public int xDir = 0;
+        public int yDir = 0;
         public int currentAnimation = 0;
         public int speed = 20;
+        public int frame_lock = 0;
         public List<Bitmap> curr_L()
         {
             List<Bitmap> ltmp = new List<Bitmap>();
@@ -1107,6 +1282,30 @@ namespace WindowsFormsApp24
                 case 21:
                     ltmp = shootupL;
                     break;
+                case 22:
+                    ltmp = strtcshootR;
+                    break;
+                case 23:
+                    ltmp = strtcshootL;
+                    break;
+                case 24:
+                    ltmp = cshootR;
+                    break;
+                case 25:
+                    ltmp = cshootL;
+                    break;
+                case 26:
+                    ltmp = jumpR;
+                    break;
+                case 27:
+                    ltmp = jumpL;
+                    break;
+                case 28:
+                    ltmp = fallR;
+                    break;
+                case 29:
+                    ltmp = fallL;
+                    break;
             }
             return ltmp;
         }
@@ -1123,7 +1322,69 @@ namespace WindowsFormsApp24
         public int hitbox_up()
         {
             Bitmap btmp = curr_F();
-            return X - (btmp.Height/2);
+            return Y - (btmp.Height / 2);
         }
+
+        public int hitbox_down()
+        {
+            Bitmap btmp = curr_F();
+            return Y + (btmp.Height / 2);
+        }
+    }
+
+    public class cmap
+    {
+        public Bitmap tile;
+        public int ct;
+        public int x;
+        public int y;
+        public int o;
+        public cmap(int i)
+        {
+            if (i == 0)
+            {
+                tile = new Bitmap("map/tile1.png");
+                ct = 0;
+                x = 0;
+                y = 0;
+                o = 0;
+            }
+            if(i == 1)
+            {
+                tile = new Bitmap("map/tile2.png");
+                ct = 0;
+                x = 0;
+                y = 0;
+                o = 1;
+            }
+            if (i == 2)
+            {
+                tile = new Bitmap("map/tile3.png");
+                ct = 0;
+                x = 0;
+                y = 0;
+                o = 1;
+            }
+
+        }
+
+        public void drawmyself(Graphics g)
+        {
+            if (o == 0)
+            {
+                for (int i = 0; i < ct; i++)
+                {
+                    g.DrawImage(tile, x + (i * tile.Width), y );
+                }
+            }
+            if (o == 1)
+            {
+                for (int i = 0; i < ct; i++)
+                {
+                    g.DrawImage(tile, x, y + (i * tile.Height));
+                }
+            }
+        }
+
     }
 }
